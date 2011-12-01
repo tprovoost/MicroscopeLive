@@ -7,7 +7,6 @@ import icy.sequence.SequenceAdapter;
 
 import org.micromanager.utils.StateItem;
 
-import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopeCore;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopeImage;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopePlugin;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.Tools.ImageGetter;
@@ -19,7 +18,7 @@ public class MicroscopeLivePlugin extends MicroscopePlugin {
 	@Override
 	public void start() {
 		// Acquisition of the first image to set up the settings
-		MicroscopeImage imgFirst = ImageGetter.snapImage(MicroscopeCore.getCore());
+		MicroscopeImage imgFirst = ImageGetter.snapImage(mCore);
 
 		// Tests if null. In this case, displays a message error and quits the plugin.
 		if (imgFirst == null) {
