@@ -17,6 +17,12 @@ public class MicroscopeLivePlugin extends MicroscopePlugin {
 
 	@Override
 	public void start() {
+		String camera = mCore.getCameraDevice();
+		if (camera == null || camera.contentEquals("")) {
+			new AnnounceFrame("No camera found in this configuration");
+			return;
+		}
+		
 		// Acquisition of the first image to set up the settings
 		MicroscopeImage imgFirst = ImageGetter.snapImage(mCore);
 
