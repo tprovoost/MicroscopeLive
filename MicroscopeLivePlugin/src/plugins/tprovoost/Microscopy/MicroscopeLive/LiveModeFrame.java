@@ -12,10 +12,9 @@ import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopeImage;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.Tools.ImageGetter;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.Tools.StageMover;
 
-
 /**
- * Class to handle Live Sequences.
- * Singleton Pattern
+ * Class to handle Live Sequences. Singleton Pattern
+ * 
  * @author Thomas Provoost
  */
 public class LiveModeFrame extends LiveSequence {
@@ -28,25 +27,36 @@ public class LiveModeFrame extends LiveSequence {
 	private MicroscopeImage video;
 	/** Refresh Rate calculated according to camera frequency */
 	private int refresh_rate;
+
 	/**
 	 * LiveModeFrame constructor.
-	 * @param buffer : a correct IcyBufferedImage to set up the LiveModeFrame correctly.
-	 * @param mCore : Reference to actual core.
+	 * 
+	 * @param buffer
+	 *            : a correct IcyBufferedImage to set up the LiveModeFrame
+	 *            correctly.
+	 * @param mCore
+	 *            : Reference to actual core.
 	 */
 	public LiveModeFrame(MicroscopeImage buffer) {
-		super("Live Mode Video",buffer);
+		super("Live Mode Video", buffer);
 		core = MicroscopeCore.getCore();
 		_thread = new LiveModeThread();
 		video = buffer;
-		refresh_rate=90;
+		refresh_rate = 90;
 		addPainter(new LivePainter(this));
 	}
-		
+
 	void resolutionChanged() {
 		video = new MicroscopeImage((int) core.getImageWidth(), (int) core.getImageHeight(), 1, DataType.USHORT);
 		setImage(0, 0, video);
 	}
-	
+
+	@Override
+	public void closed() {
+		super.closed();
+		stopLive();
+	}
+
 	/**
 	 * Starts the thread.
 	 */
@@ -60,21 +70,21 @@ public class LiveModeFrame extends LiveSequence {
 		}
 		_thread.start();
 	}
-	
+
 	public void pauseLive() {
 		if (_thread != null) {
 			// pause the thread
 			_thread.please_wait = true;
 		}
 	}
-	
+
 	public void resumeLive() {
 		if (_thread != null) {
 			// Resume the thread
 			_thread.please_wait = false;
 		}
 	}
-	
+
 	/**
 	 * Stops the thread.
 	 */
@@ -82,7 +92,7 @@ public class LiveModeFrame extends LiveSequence {
 		if (_thread != null) {
 			_thread.please_wait = true;
 			_thread.interrupt();
-			while(!_thread.isInterrupted()) {
+			while (!_thread.isInterrupted()) {
 				_thread.interrupt();
 			}
 			try {
@@ -90,23 +100,24 @@ public class LiveModeFrame extends LiveSequence {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			_thread=null;
+			_thread = null;
 		}
 	}
-	
+
 	public void setRefreshRate(int cfrequency) {
-		refresh_rate=(int)((1.0/cfrequency)*1000);
+		refresh_rate = (int) ((1.0 / cfrequency) * 1000);
 	}
-			
+
 	/**
 	 * Thread for the live sequence
+	 * 
 	 * @author Thomas Provoost
 	 */
 	private class LiveModeThread extends Thread {
-		
+
 		/** Used to pause the thread */
-		boolean please_wait=false;
-		
+		boolean please_wait = false;
+
 		@Override
 		public void run() {
 			super.run();
@@ -119,7 +130,7 @@ public class LiveModeFrame extends LiveSequence {
 							throw e;
 						}
 					}
-					video = (MicroscopeImage)getFirstImage();
+					video = (MicroscopeImage) getFirstImage();
 					if (video.getWidth() != (int) core.getImageWidth() || video.getHeight() != (int) core.getImageHeight()) {
 						if (core.getImageWidth() <= 0 || core.getImageHeight() <= 0)
 							throw new InterruptedException();
@@ -127,14 +138,14 @@ public class LiveModeFrame extends LiveSequence {
 					}
 					if (!updating) {
 						ThreadUtil.bgRun(new Runnable() {
-							
+
 							@Override
 							public void run() {
 								setUpdating(true);
-								short [] table = ImageGetter.getImageFromLiveToShort(core);
+								short[] table = ImageGetter.getImageFromLiveToShort(core);
 								if (table != null) {
 									try {
-										video.setDataXYAsShort(0,table);
+										video.setDataXYAsShort(0, table);
 										video.setXYZ(StageMover.getXYZ());
 										video.setExposure(core.getExposure());
 									} catch (Exception e) {
@@ -152,16 +163,15 @@ public class LiveModeFrame extends LiveSequence {
 						}
 					}
 					sleep(refresh_rate);
-				}
-				catch (InterruptedException e1) {
+				} catch (InterruptedException e1) {
 					return;
 				}
 			}
-		}		
+		}
 	}
-	
+
 	@Override
 	public String toString() {
-		return super.toString()+"LiveModeFrame";
+		return super.toString() + "LiveModeFrame";
 	}
 }
