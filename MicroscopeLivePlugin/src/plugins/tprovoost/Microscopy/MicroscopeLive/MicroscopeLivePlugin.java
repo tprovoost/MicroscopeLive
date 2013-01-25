@@ -11,78 +11,88 @@ import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopeImage;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.MicroscopePlugin;
 import plugins.tprovoost.Microscopy.MicroManagerForIcy.Tools.ImageGetter;
 
-public class MicroscopeLivePlugin extends MicroscopePlugin {
+public class MicroscopeLivePlugin extends MicroscopePlugin
+{
 
-	private LiveModeFrame _livemode;
+    private LiveModeFrame _livemode;
 
-	@Override
-	public void start() {
-		String camera = mCore.getCameraDevice();
-		if (camera == null || camera.contentEquals("")) {
-			new AnnounceFrame("No camera found in this configuration");
-			return;
-		}
-		
-		// Acquisition of the first image to set up the settings
-		MicroscopeImage imgFirst = ImageGetter.snapImage(mCore);
+    @Override
+    public void start()
+    {
+        String camera = mCore.getCameraDevice();
+        if (camera == null || camera.contentEquals(""))
+        {
+            new AnnounceFrame("No camera found in this configuration");
+            return;
+        }
 
-		// Tests if null. In this case, displays a message error and quits the plugin.
-		if (imgFirst == null) {
-			new AnnounceFrame("Error with acquisition of the first image.");
-			return;
-		}
+        // Acquisition of the first image to set up the settings
+        MicroscopeImage imgFirst = ImageGetter.snapImage(mCore);
 
-		// Creation of the video frame with this first image.
-		_livemode = new LiveModeFrame(imgFirst);
+        // Tests if null. In this case, displays a message error and quits the plugin.
+        if (imgFirst == null)
+        {
+            new AnnounceFrame("Error with acquisition of the first image.");
+            return;
+        }
 
-		// Tests if frame null. Displays a message error if true and quits the plugin.
-		if (_livemode == null) {
-			new AnnounceFrame("Error while capturing image.");
-			return;
-		}
+        // Creation of the video frame with this first image.
+        _livemode = new LiveModeFrame(imgFirst);
 
-		Icy.addSequence(_livemode);
-		// add the video to the main panel
+        // Tests if frame null. Displays a message error if true and quits the plugin.
+        if (_livemode == null)
+        {
+            new AnnounceFrame("Error while capturing image.");
+            return;
+        }
 
-		// ask for a continuous acquisition : instead of snapping and getting images,
-		// images are continuously snapped and the last one is used.
-		mainGui.continuousAcquisitionNeeded(this);
+        Icy.getMainInterface().addSequence(_livemode);
+        // add the video to the main panel
 
-		// starts the video
-		_livemode.startLive();
+        // ask for a continuous acquisition : instead of snapping and getting images,
+        // images are continuously snapped and the last one is used.
+        mainGui.continuousAcquisitionNeeded(this);
 
-		// add the plugin to the GUI
-		mainGui.addPlugin(this);
+        // starts the video
+        _livemode.startLive();
 
-		// sets listener on the frame in order to remove this plugin  
-		// from the GUI when the frame is closed
-		_livemode.addListener(new SequenceAdapter() {
-			@Override
-			public void sequenceClosed(Sequence sequence) {
-				super.sequenceClosed(sequence);
-				mainGui.continuousAcquisitionReleased(MicroscopeLivePlugin.this);
-				mainGui.removePlugin(MicroscopeLivePlugin.this);
-			}
-		});
-	}
+        // add the plugin to the GUI
+        mainGui.addPlugin(this);
 
-	@Override
-	public void notifyConfigAboutToChange(StateItem item) {
-		// Pause the video when config is about to change
-		_livemode.pauseLive();
-		mainGui.continuousAcquisitionReleased(MicroscopeLivePlugin.this);
-	}
+        // sets listener on the frame in order to remove this plugin
+        // from the GUI when the frame is closed
+        _livemode.addListener(new SequenceAdapter()
+        {
+            @Override
+            public void sequenceClosed(Sequence sequence)
+            {
+                super.sequenceClosed(sequence);
+                mainGui.continuousAcquisitionReleased(MicroscopeLivePlugin.this);
+                mainGui.removePlugin(MicroscopeLivePlugin.this);
+            }
+        });
+    }
 
-	@Override
-	public void notifyConfigChanged(StateItem item) throws Exception {
-		// Resume the video when config is about to change
-		_livemode.resumeLive();
-		mainGui.continuousAcquisitionNeeded(MicroscopeLivePlugin.this);
-	}
+    @Override
+    public void notifyConfigAboutToChange(StateItem item)
+    {
+        // Pause the video when config is about to change
+        _livemode.pauseLive();
+        mainGui.continuousAcquisitionReleased(MicroscopeLivePlugin.this);
+    }
 
-	@Override
-	public void MainGUIClosed() {
-		if (_livemode != null)
-			_livemode.stopLive();
-	}
+    @Override
+    public void notifyConfigChanged(StateItem item) throws Exception
+    {
+        // Resume the video when config is about to change
+        _livemode.resumeLive();
+        mainGui.continuousAcquisitionNeeded(MicroscopeLivePlugin.this);
+    }
+
+    @Override
+    public void MainGUIClosed()
+    {
+        if (_livemode != null)
+            _livemode.stopLive();
+    }
 }
